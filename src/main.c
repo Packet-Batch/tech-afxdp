@@ -2,6 +2,8 @@
 
 #include "afxdp.h"
 
+//#define TEST_MODE
+
 static xsk_socket_info_t* sockets[MAX_CPUS];
 
 /**
@@ -18,6 +20,9 @@ static xsk_socket_info_t* sockets[MAX_CPUS];
  * @return 0 on success or other value on error.
  */
 int Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forceSkb, int zeroCopy, int threads) {
+#ifdef TEST_MODE
+    printf("Setting up %d AF_XDP sockets on '%s' (queueId => %d, needWakeup => %d, sharedUmem => %d, forceSkb => %d, zeroCopy => %d)...\n", threads, dev, queueId, needWakeup, sharedUmem, forceSkb, zeroCopy);
+#else
     u32 xdpFlags = XDP_FLAGS_DRV_MODE;
 
     if (forceSkb)
@@ -36,6 +41,7 @@ int Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forc
     for (int i = 0; i < threads; i++) {
         sockets[i] = SetupSocket(dev, i, queueId, xdpFlags, bindFlags, sharedUmem);
     }
+#endif
 
     return 0;
 }
@@ -48,12 +54,16 @@ int Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forc
  * @return 0 on success or other value on error.
  */
 int Cleanup(int threads) {
+#ifdef TEST_MODE
+    printf("Cleaning up %d AF_XDP sockets...\n", threads);
+#else
     for (int i = 0; i < threads; i++) {
         xsk_socket_info_t* xsk = sockets[i];
 
         if (xsk)
             CleanupSocket(xsk);
     }
+#endif
 
     return 0;
 }
@@ -69,6 +79,9 @@ int Cleanup(int threads) {
  * @return 0 on success or other value on error.
  */
 int SendPacket(void *pkt, int length, int threadIdx, int batchSize) {
+#ifdef TEST_MODE
+    printf("Sending %d bytes on AF_XDP socket at index %d (batchSize => %d)...\n", length, threadIdx, batchSize);
+#else
     xsk_socket_info_t* xsk = sockets[threadIdx];
 
     if (!xsk)
@@ -116,6 +129,7 @@ int SendPacket(void *pkt, int length, int threadIdx, int batchSize) {
 
     // Complete TX again.
     CompleteTx(xsk, batchSize);
+#endif
 
     return 0;
 }
