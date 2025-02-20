@@ -93,7 +93,7 @@ int main() {
     unsigned short pktLen = sizeof(struct ethhdr) + (iph->ihl * 4) + sizeof(struct tcphdr);
 
     // Send packet.
-    if ((ret = SendPacket((void *)buffer, pktLen, 1, BATCH_SIZE)) != 0) {
+    if ((ret = SendPacket((void *)buffer, pktLen, 0, BATCH_SIZE)) != 0) {
         fprintf(stderr, "[ERR] Failed to send packet (size %d bytes): %d\n", pktLen, ret);
 
         return 1;
