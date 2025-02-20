@@ -7,6 +7,41 @@ When building, a shared library (`libpbafxdp.so`) is created which is then insta
 
 There is also an [`api.h`](./include/api.h) header file that may be installed to `/usr/include/pb/afxdp/api.h` which should be included by programs that want to utilize this small API.
 
+If you want to interact with the API, you'll want to make sure `/usr/include` is included when building your C source code (via `-I /usr/include`) and you'll want to also pass the linker flags `-lxdp -lbpf -lpbafxdp`. Afterwards, you can do something like the following.
+
+```C
+#include <pb/afxdp/api.h>
+
+#include <linux/bpf.h>
+#include <xdp/xsk.h>
+
+#define INTERFACE "eth0"
+
+int main() {
+    int ret;
+
+    if ((ret = Setup(INTERFACE, 0, 0, 0, 0, 0, 1)) != 0) {
+        fprintf(stderr, "[ERR] Failed to setup AF_XDP socket on %s: %d\n", INTERFACE, ret);
+
+        return ret;
+    }
+
+    printf("Sockets setup successfully!\n");
+
+    if ((ret = Cleanup(1)) != 0) {
+        fprintf(stderr, "[ERR] Failed to cleanup AF_XDP socket on %s: %d\n", INTERFACE, ret);
+
+        return ret;
+    }
+
+    printf("Sockets cleaned up successfully!\n");
+
+    return 0;
+}
+```
+
+Take a look at test programs from the [`tests/`](./tests/) directory for more information.
+
 ## Building & Installing
 Before building this project, make sure to build and install [`xdp-tools`](https://github.com/xdp-project/xdp-tools) onto your server's system. When creating programs using this API, you will need to link `xdp-tools` via the `-lxdp -lbpf` linker flags.
 
@@ -67,7 +102,7 @@ extern int Cleanup(int threads);
 extern int SendPacket(void *pkt, int length, int threadIdx, int batchSize);
 ```
 
-Take a look at tests from the [`tests/`](./tests/) directory for more information.
+Take a look at test programs from the [`tests/`](./tests/) directory for more information.
 
 ## Tests
 * [`tcp_syn_test.c`](./tests/tcp_syn_test.c) - Sends a single TCP SYN packet on an AF_XDP socket (no checksum calculated).

@@ -99,7 +99,6 @@ int main() {
         return 1;
     }
 
-
     // Cleanup.
     if ((ret = Cleanup(1)) != 0) {
         fprintf(stderr, "[ERR] Failed to cleanup AF_XDP socket: %d\n", ret);
