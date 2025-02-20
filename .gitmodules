@@ -1,0 +1,6 @@
+[submodule "src/common"]
+	path = src/common
+	url = git@github.com:Packet-Batch/tech-common
+[submodule "modules/xdp-tools"]
+	path = modules/xdp-tools
+	url = https://github.com/xdp-project/xdp-tools
