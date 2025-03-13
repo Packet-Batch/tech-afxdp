@@ -39,7 +39,12 @@ int Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forc
         bindFlags |= XDP_COPY;
     
     for (int i = 0; i < threads; i++) {
-        sockets[i] = SetupSocket(dev, i, queueId, xdpFlags, bindFlags, sharedUmem);
+        int queueIdToUse = queueId;
+
+        if (queueId < 0)
+            queueIdToUse = i;
+
+        sockets[i] = SetupSocket(dev, i, queueIdToUse, xdpFlags, bindFlags, sharedUmem);
     }
 #endif
 
