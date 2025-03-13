@@ -121,7 +121,7 @@ static xsk_socket_info_t* ConfigureXsk (xsk_umem_info_t *umem, const char *dev, 
     ret = xsk_socket__create(&xsk->xsk, dev, queueId, umem->umem, NULL, &xsk->tx, &xskCfg);
 
     if (ret) {
-        fprintf(stderr, "Failed to create AF_XDP/XSK socket at creation.\n");
+        fprintf(stderr, "Failed to create AF_XDP/XSK socket at creation (%d) (queue ID => %d).\n", ret, queueId);
 
         goto error_exit;
     }
@@ -203,7 +203,6 @@ xsk_umem_info_t *SetupUmem() {
  * Sets up an AF_XDP socket.
  * 
  * @param dev The interface name.
- * @param idx The socket index.
  * @param queueId The queue ID to assign.
  * @param xdpFlags The XDP flags.
  * @param bindFlags The XDP bind flags.
@@ -211,7 +210,7 @@ xsk_umem_info_t *SetupUmem() {
  * 
  * @return A pointer to the new XSK socket info structure (or NULL on failure).
 **/
-xsk_socket_info_t* SetupSocket(const char *dev, int idx, int queueId, u32 xdpFlags, u32 bindFlags, int useSharedUmem) {
+xsk_socket_info_t* SetupSocket(const char *dev, int queueId, u32 xdpFlags, u32 bindFlags, int useSharedUmem) {
     xsk_umem_info_t *umem;
 
     if (useSharedUmem) {

@@ -1,13 +1,9 @@
-#include <api.h>
-
 #include "afxdp.h"
 
 //#define TEST_MODE
 
-static xsk_socket_info_t* sockets[MAX_CPUS];
-
 /**
- * Sets up AF_XDP sockets.
+ * Sets up an AF_XDP socket.
  * 
  * @param dev The interface to bind the AF_XDP sockets to.
  * @param queueId The TX queue ID to use.
@@ -15,13 +11,12 @@ static xsk_socket_info_t* sockets[MAX_CPUS];
  * @param sharedUmem If 1, uses a shared umem allocated between all sockets.
  * @param forceSkb If 1, forces SKB mode (slower, but useful for debugging).
  * @param zeroCopy If 1, will set the zero-copy flag.
- * @param threads The amount of sockets and threads to create.
  * 
  * @return 0 on success or other value on error.
  */
-int Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forceSkb, int zeroCopy, int threads) {
+void* Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forceSkb, int zeroCopy) {
 #ifdef TEST_MODE
-    printf("Setting up %d AF_XDP sockets on '%s' (queueId => %d, needWakeup => %d, sharedUmem => %d, forceSkb => %d, zeroCopy => %d)...\n", threads, dev, queueId, needWakeup, sharedUmem, forceSkb, zeroCopy);
+    printf("Setting up AF_XDP socket on '%s' (queueId => %d, needWakeup => %d, sharedUmem => %d, forceSkb => %d, zeroCopy => %d)...\n", dev, queueId, needWakeup, sharedUmem, forceSkb, zeroCopy);
 #else
     u32 xdpFlags = XDP_FLAGS_DRV_MODE;
 
@@ -37,37 +32,28 @@ int Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forc
         bindFlags |= XDP_ZEROCOPY;
     else
         bindFlags |= XDP_COPY;
-    
-    for (int i = 0; i < threads; i++) {
-        int queueIdToUse = queueId;
 
-        if (queueId < 0)
-            queueIdToUse = i;
-
-        sockets[i] = SetupSocket(dev, i, queueIdToUse, xdpFlags, bindFlags, sharedUmem);
-    }
+    return  (void*) SetupSocket(dev, queueId, xdpFlags, bindFlags, sharedUmem);
 #endif
 
-    return 0;
+    return NULL;
 }
 
 /**
- * Cleans up AF_XDP sockets.
+ * Cleans up an AF_XDP socket.
  * 
- * @param threads The amount of sockets and threads that were created in Setup().
+ * @param xskPtr A pointer to the AF_XDP socket.
  * 
  * @return 0 on success or other value on error.
  */
-int Cleanup(int threads) {
+int Cleanup(void* xskPtr) {
 #ifdef TEST_MODE
-    printf("Cleaning up %d AF_XDP sockets...\n", threads);
+    printf("Cleaning up AF_XDP socket...\n");
 #else
-    for (int i = 0; i < threads; i++) {
-        xsk_socket_info_t* xsk = sockets[i];
+    xsk_socket_info_t* xsk = (xsk_socket_info_t*)xskPtr;
 
-        if (xsk)
-            CleanupSocket(xsk);
-    }
+    if (xsk)
+        CleanupSocket(xsk);
 #endif
 
     return 0;
@@ -76,19 +62,19 @@ int Cleanup(int threads) {
 /**
  * Sends a packet on an AF_XDP socket (at index).
  * 
+ * @param xskPtr A pointer to the AF_XDP socket.
  * @param pkt The packet buffer.
  * @param length The packet's full length (includes ethernet header, layer 3/4 headers, and payload).
- * @param threadIdx The socket index to send on.
  * @param batchSize The batch size.
  * 
  * @return 0 on success or other value on error.
  */
-int SendPacket(void *pkt, int length, int threadIdx, int batchSize) {
+int SendPacket(void* xskPtr, void *pkt, int length, int batchSize) {
 #ifdef TEST_MODE
-    printf("Sending %d bytes on AF_XDP socket at index %d (batchSize => %d)...\n", length, threadIdx, batchSize);
+    printf("Sending %d bytes on AF_XDP socket (batchSize => %d)...\n", length, batchSize);
 #else
-    xsk_socket_info_t* xsk = sockets[threadIdx];
-
+    xsk_socket_info_t* xsk = (xsk_socket_info_t*)xskPtr;
+    
     if (!xsk)
         return -2;
 

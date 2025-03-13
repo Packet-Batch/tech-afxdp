@@ -15,7 +15,6 @@
 
 #include <xdp/xsk.h>
 
-#include <api.h>
 #include <simple_types.h>
 
 #define MAX_CPUS 256
@@ -62,5 +61,5 @@ int GetSocketFd(struct xsk_socket_info *xsk);
 void CompleteTx(xsk_socket_info_t *xsk, int batchSize);
 
 struct xsk_umem_info *SetupUmem();
-xsk_socket_info_t* SetupSocket(const char *dev, int idx, int queueId, u32 xdpFlags, u32 bindFlags, int useSharedUmem);
+xsk_socket_info_t* SetupSocket(const char *dev, int queueId, u32 xdpFlags, u32 bindFlags, int useSharedUmem);
 void CleanupSocket(xsk_socket_info_t *xsk);

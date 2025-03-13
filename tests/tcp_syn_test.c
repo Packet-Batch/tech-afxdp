@@ -14,7 +14,7 @@
 
 #include <string.h>
 
-#define INTERFACE "eth0"
+#define INTERFACE "enp1s0"
 
 const char sMac[] = { 0X00, 0X00, 0X00, 0X00, 0X00, 0X00 };
 const char dMac[] = { 0X00, 0X00, 0X00, 0X00, 0X00, 0X00 };
@@ -30,11 +30,13 @@ const char dMac[] = { 0X00, 0X00, 0X00, 0X00, 0X00, 0X00 };
 int main() {
     int ret;
 
-    // Setup.
-    if ((ret = Setup(INTERFACE, 0, 0, 0, 0, 0, 1)) != 0) {
-        fprintf(stderr, "[ERR] Failed to setup AF_XDP socket: %d\n", ret);
+    void* xsk = Setup(INTERFACE, 0, 0, 0, 0, 0);
 
-        return ret;
+    // Setup.
+    if (!xsk) {
+        fprintf(stderr, "[ERR] Failed to setup AF_XDP socket: socket is NULL.\n");
+
+        return 1;
     }
 
     // Create packet buffer.
@@ -93,14 +95,14 @@ int main() {
     unsigned short pktLen = sizeof(struct ethhdr) + (iph->ihl * 4) + sizeof(struct tcphdr);
 
     // Send packet.
-    if ((ret = SendPacket((void *)buffer, pktLen, 0, BATCH_SIZE)) != 0) {
+    if ((ret = SendPacket(xsk, (void *)buffer, pktLen, BATCH_SIZE)) != 0) {
         fprintf(stderr, "[ERR] Failed to send packet (size %d bytes): %d\n", pktLen, ret);
 
         return 1;
     }
 
     // Cleanup.
-    if ((ret = Cleanup(1)) != 0) {
+    if ((ret = Cleanup(xsk)) != 0) {
         fprintf(stderr, "[ERR] Failed to cleanup AF_XDP socket: %d\n", ret);
 
         return ret;

@@ -1,3 +1,3 @@
-extern int Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forceSkb, int zeroCopy, int threads);
-extern int Cleanup(int threads);
-extern int SendPacket(void *pkt, int length, int threadIdx, int batchSize);
+extern void* Setup(const char *dev, int queueId, int needWakeup, int sharedUmem, int forceSkb, int zeroCopy);
+extern int Cleanup(void* xskPtr);
+extern int SendPacket(void* xskPtr, void *pkt, int length, int batchSize);
